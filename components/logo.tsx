@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import { SITE_NAME } from '@/lib/site';
 
 export function LogoMark({ className }: { className?: string }) {
   return (
@@ -13,15 +12,16 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-/** Mark plus the wordmark. The name hides on very narrow screens. */
+/**
+ * Mark plus the wordmark. The name always stays visible — on narrow screens
+ * it's the header's other controls (see SiteHeader) that collapse to icons
+ * to make room, rather than the wordmark disappearing.
+ */
 export function Logo({ className, showMark = true }: { className?: string; showMark?: boolean }) {
   return (
     <span className={cn('flex items-center tracking-tight', showMark && 'gap-2', className)}>
       {showMark ? <LogoMark className="size-8" /> : null}
-      <span className="hidden min-[400px]:inline">
-        <span className="font-bold">TestForge</span>
-      </span>
-      <span className="sr-only min-[400px]:hidden">{SITE_NAME}</span>
+      <span className="font-bold">TestForge</span>
     </span>
   );
 }

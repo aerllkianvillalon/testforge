@@ -11,7 +11,7 @@ import { ChevronDownIcon } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
 
 const base =
-  'w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm transition-colors ' +
+  'w-full rounded-md border border-input bg-transparent px-3 text-sm text-foreground shadow-sm transition-colors ' +
   'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ' +
   'disabled:cursor-not-allowed disabled:opacity-50';
 
@@ -40,7 +40,15 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
   function Select({ className, children, ...props }, ref) {
     return (
       <div className="relative">
-        <select ref={ref} className={cn(base, 'h-9 appearance-none bg-background py-1 pr-9', className)} {...props}>
+        <select
+          ref={ref}
+          className={cn(
+            base,
+            'h-9 appearance-none bg-background py-1 pr-9 [&>option]:bg-background [&>option]:text-foreground',
+            className,
+          )}
+          {...props}
+        >
           {children}
         </select>
         <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

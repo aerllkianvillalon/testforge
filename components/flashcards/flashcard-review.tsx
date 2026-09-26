@@ -49,7 +49,17 @@ function shuffled<T>(list: T[]): T[] {
   return copy;
 }
 
-export function FlashcardReview({ items }: { items: Flashcard[] }) {
+export function FlashcardReview({
+  items,
+  trackStats = true,
+  compact = false,
+}: {
+  items: Flashcard[];
+  /** Off for a demo/sample deck, so playing with it never touches this browser's real study streak. */
+  trackStats?: boolean;
+  /** Drops the secondary toolbar and keyboard hint for a narrower slot, like the landing page hero. */
+  compact?: boolean;
+}) {
   const [queue, setQueue] = useState<number[]>(() => items.map((_, i) => i));
   const [position, setPosition] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -101,10 +111,10 @@ export function FlashcardReview({ items }: { items: Flashcard[] }) {
 
   // Count each finished round once toward the study streak.
   useEffect(() => {
-    if (!done || total === 0 || recordedRun.current === run) return;
+    if (!trackStats || !done || total === 0 || recordedRun.current === run) return;
     recordedRun.current = run;
     recordActivity({ cards: total, known: total - repeat.length });
-  }, [done, run, total, repeat.length]);
+  }, [trackStats, done, run, total, repeat.length]);
 
   // Focus mode: lock page scroll, and let Esc leave.
   useEffect(() => {
@@ -440,56 +450,58 @@ export function FlashcardReview({ items }: { items: Flashcard[] }) {
         </div>
       </div>
 
-      <div className="-mx-1 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={shuffle}
-            disabled={exit !== null || total - position < 2}
-            aria-label="Shuffle the remaining cards"
-          >
-            <ShuffleIcon />
-            <span className="hidden sm:inline">Shuffle</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleReversed}
-            aria-pressed={reversed}
-            aria-label="Show answers first"
-            className={cn(reversed && 'bg-accent')}
-          >
-            <SwapIcon />
-            <span className="hidden sm:inline">Answer first</span>
-          </Button>
-        </div>
-        <div className="flex items-center gap-1">
-          {canSpeak ? (
+      {compact ? null : (
+        <div className="-mx-1 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              onClick={toggleSpeak}
-              aria-pressed={speaking}
-              aria-label={speaking ? 'Stop reading aloud' : 'Read this side aloud'}
-              className={cn(speaking && 'bg-accent')}
+              onClick={shuffle}
+              disabled={exit !== null || total - position < 2}
+              aria-label="Shuffle the remaining cards"
             >
-              <VolumeIcon className={cn(speaking && 'animate-pulse')} />
-              <span className="hidden sm:inline">{speaking ? 'Stop' : 'Read aloud'}</span>
+              <ShuffleIcon />
+              <span className="hidden sm:inline">Shuffle</span>
             </Button>
-          ) : null}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setFocus((f) => !f)}
-            aria-pressed={focus}
-            aria-label={focus ? 'Exit focus mode' : 'Enter focus mode'}
-          >
-            {focus ? <MinimizeIcon /> : <MaximizeIcon />}
-            <span className="hidden sm:inline">{focus ? 'Exit focus' : 'Focus'}</span>
-          </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleReversed}
+              aria-pressed={reversed}
+              aria-label="Show answers first"
+              className={cn(reversed && 'bg-accent')}
+            >
+              <SwapIcon />
+              <span className="hidden sm:inline">Answer first</span>
+            </Button>
+          </div>
+          <div className="flex items-center gap-1">
+            {canSpeak ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSpeak}
+                aria-pressed={speaking}
+                aria-label={speaking ? 'Stop reading aloud' : 'Read this side aloud'}
+                className={cn(speaking && 'bg-accent')}
+              >
+                <VolumeIcon className={cn(speaking && 'animate-pulse')} />
+                <span className="hidden sm:inline">{speaking ? 'Stop' : 'Read aloud'}</span>
+              </Button>
+            ) : null}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFocus((f) => !f)}
+              aria-pressed={focus}
+              aria-label={focus ? 'Exit focus mode' : 'Enter focus mode'}
+            >
+              {focus ? <MinimizeIcon /> : <MaximizeIcon />}
+              <span className="hidden sm:inline">{focus ? 'Exit focus' : 'Focus'}</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="fc-stage">
         <div className="fc-deck" data-tall={tall}>
@@ -556,27 +568,29 @@ export function FlashcardReview({ items }: { items: Flashcard[] }) {
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-2.5">
-        <Button variant="secondary" size="lg" onClick={() => sort(true)} disabled={exit !== null}>
+        <Button variant="secondary" size={compact ? 'md' : 'lg'} onClick={() => sort(true)} disabled={exit !== null}>
           <UndoIcon />
           Review again
         </Button>
-        <Button variant="secondary" size="lg" onClick={flip} disabled={exit !== null}>
+        <Button variant="secondary" size={compact ? 'md' : 'lg'} onClick={flip} disabled={exit !== null}>
           <FlipIcon />
           {flipped ? `Hide ${hiddenSide}` : `Show ${hiddenSide}`}
         </Button>
-        <Button size="lg" onClick={() => sort(false)} disabled={exit !== null}>
+        <Button size={compact ? 'md' : 'lg'} onClick={() => sort(false)} disabled={exit !== null}>
           <CheckIcon />
           Got it
         </Button>
       </div>
 
-      <p className="text-center text-xs text-muted-foreground">
-        <span className="hidden sm:inline">
-          <Kbd>Space</Kbd> flips · <Kbd>←</Kbd> review again · <Kbd>→</Kbd> got it · or{' '}
-        </span>
-        <span className="sm:hidden">Tap to flip. </span>
-        <span>drag the card left or right</span>
-      </p>
+      {compact ? null : (
+        <p className="text-center text-xs text-muted-foreground">
+          <span className="hidden sm:inline">
+            <Kbd>Space</Kbd> flips · <Kbd>←</Kbd> review again · <Kbd>→</Kbd> got it · or{' '}
+          </span>
+          <span className="sm:hidden">Tap to flip. </span>
+          <span>drag the card left or right</span>
+        </p>
+      )}
     </div>,
   );
 }

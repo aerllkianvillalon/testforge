@@ -4,7 +4,7 @@ import { SignOutButton } from '@/components/sign-out-button';
 import { SiteNav } from '@/components/site-nav';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { buttonVariants } from '@/components/ui/button';
-import { UserIcon } from '@/components/ui/icons';
+import { BookmarkIcon, UserIcon } from '@/components/ui/icons';
 
 export function SiteHeader({ email }: { email: string | null }) {
   return (
@@ -21,10 +21,16 @@ export function SiteHeader({ email }: { email: string | null }) {
           <ThemeToggle />
           {email ? (
             <>
-              <Link href="/dashboard" className={buttonVariants('secondary', 'sm', 'sm:hidden')}>
-                Saved sets
+              <Link
+                href="/dashboard"
+                className={buttonVariants('ghost', 'sm', 'gap-1.5 px-2 min-[400px]:px-3 sm:hidden')}
+                aria-label="Saved sets"
+                title="Saved sets"
+              >
+                <BookmarkIcon className="min-[400px]:hidden" />
+                <span className="hidden min-[400px]:inline">Saved sets</span>
               </Link>
-              <SignOutButton />
+              <SignOutButton compact />
               <Link
                 href="/profile"
                 className={buttonVariants('ghost', 'icon')}

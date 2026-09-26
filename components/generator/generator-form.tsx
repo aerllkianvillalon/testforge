@@ -261,16 +261,9 @@ export function GeneratorForm({ onResult }: { onResult: (set: GeneratedSet) => v
             {pending ? 'Generating…' : 'Generate'}
           </Button>
           {pending ? (
-            <div className="flex items-center gap-4" role="status">
-              <div className="riffle" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Reading your notes and writing {type === 'flashcards' ? 'cards' : 'questions'} — this takes a few seconds.
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground" role="status">
+              Reading your notes and writing {type === 'flashcards' ? 'cards' : 'questions'} — this takes a few seconds.
+            </p>
           ) : mode === 'paste' ? (
             <p className="hidden text-xs text-muted-foreground sm:block">or press Ctrl + Enter</p>
           ) : null}

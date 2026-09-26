@@ -40,7 +40,17 @@ function shuffled<T>(list: T[]): T[] {
   return copy;
 }
 
-export function QuizRunner({ items }: { items: QuizItem[] }) {
+export function QuizRunner({
+  items,
+  trackStats = true,
+  compact = false,
+}: {
+  items: QuizItem[];
+  /** Off for a demo/sample quiz, so playing with it never touches this browser's real study streak. */
+  trackStats?: boolean;
+  /** Drops the secondary toolbar and keyboard hint for a narrower slot, like the landing page hero. */
+  compact?: boolean;
+}) {
   const [order, setOrder] = useState<number[]>(() => items.map((_, i) => i));
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -62,8 +72,12 @@ export function QuizRunner({ items }: { items: QuizItem[] }) {
 
   // Read through a ref so toggling the checkbox mid-question never reshuffles
   // the options you're already looking at — only takes effect from the next
-  // question the memo below actually recomputes for.
-  const [optionOrder, setOptionOrder] = useState<number[]>([]);
+  // question the memo below actually recomputes for. Seeded synchronously
+  // (not via an effect) so the first question's options are present on the
+  // very first paint, instead of flashing in a frame later.
+  const [optionOrder, setOptionOrder] = useState<number[]>(() =>
+    Array.from({ length: optionCount }, (_, i) => i),
+  );
 
 useEffect(() => {
   const idx = Array.from({ length: optionCount }, (_, i) => i);
@@ -249,6 +263,7 @@ useEffect(() => {
         onRestart={restart}
         focus={focus}
         onExitFocus={() => setFocus(false)}
+        trackStats={trackStats}
       />,
     );
   }
@@ -278,56 +293,58 @@ useEffect(() => {
         </div>
       </div>
 
-      <div className="-mx-1 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={shuffleUpcoming}
-            disabled={items.length - index - 1 < 2}
-            aria-label="Shuffle the remaining questions"
-          >
-            <ShuffleIcon />
-            <span className="hidden sm:inline">Shuffle</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleShuffleOptions}
-            aria-pressed={shuffleOptions}
-            aria-label="Shuffle answer order"
-            className={cn(shuffleOptions && 'bg-accent')}
-          >
-            <SwapIcon />
-            <span className="hidden sm:inline">Shuffle options</span>
-          </Button>
-        </div>
-        <div className="flex items-center gap-1">
-          {canSpeak ? (
+      {compact ? null : (
+        <div className="-mx-1 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              onClick={toggleSpeak}
-              aria-pressed={speaking}
-              aria-label={speaking ? 'Stop reading aloud' : 'Read this question aloud'}
-              className={cn(speaking && 'bg-accent')}
+              onClick={shuffleUpcoming}
+              disabled={items.length - index - 1 < 2}
+              aria-label="Shuffle the remaining questions"
             >
-              <VolumeIcon className={cn(speaking && 'animate-pulse')} />
-              <span className="hidden sm:inline">{speaking ? 'Stop' : 'Read aloud'}</span>
+              <ShuffleIcon />
+              <span className="hidden sm:inline">Shuffle</span>
             </Button>
-          ) : null}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setFocus((f) => !f)}
-            aria-pressed={focus}
-            aria-label={focus ? 'Exit focus mode' : 'Enter focus mode'}
-          >
-            {focus ? <MinimizeIcon /> : <MaximizeIcon />}
-            <span className="hidden sm:inline">{focus ? 'Exit focus' : 'Focus'}</span>
-          </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleShuffleOptions}
+              aria-pressed={shuffleOptions}
+              aria-label="Shuffle answer order"
+              className={cn(shuffleOptions && 'bg-accent')}
+            >
+              <SwapIcon />
+              <span className="hidden sm:inline">Shuffle options</span>
+            </Button>
+          </div>
+          <div className="flex items-center gap-1">
+            {canSpeak ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSpeak}
+                aria-pressed={speaking}
+                aria-label={speaking ? 'Stop reading aloud' : 'Read this question aloud'}
+                className={cn(speaking && 'bg-accent')}
+              >
+                <VolumeIcon className={cn(speaking && 'animate-pulse')} />
+                <span className="hidden sm:inline">{speaking ? 'Stop' : 'Read aloud'}</span>
+              </Button>
+            ) : null}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFocus((f) => !f)}
+              aria-pressed={focus}
+              aria-label={focus ? 'Exit focus mode' : 'Enter focus mode'}
+            >
+              {focus ? <MinimizeIcon /> : <MaximizeIcon />}
+              <span className="hidden sm:inline">{focus ? 'Exit focus' : 'Focus'}</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <Card>
         <CardBody className="space-y-6 p-5 sm:p-8">
@@ -395,7 +412,7 @@ useEffect(() => {
             <ArrowRightIcon />
           </Button>
         </div>
-      ) : (
+      ) : compact ? null : (
         <p className="hidden text-center text-xs text-muted-foreground sm:block">
           Press <Kbd>A</Kbd>–<Kbd>D</Kbd> or <Kbd>1</Kbd>–<Kbd>4</Kbd> to answer
         </p>
@@ -413,6 +430,7 @@ function Results({
   onRestart,
   focus,
   onExitFocus,
+  trackStats,
 }: {
   items: QuizItem[];
   order: number[];
@@ -422,6 +440,7 @@ function Results({
   onRestart: () => void;
   focus: boolean;
   onExitFocus: () => void;
+  trackStats: boolean;
 }) {
   const total = answers.length;
   const percent = total === 0 ? 0 : Math.round((score / total) * 100);
@@ -430,10 +449,10 @@ function Results({
 
   // Count the finished quiz once toward the study stats.
   useEffect(() => {
-    if (recorded.current || total === 0) return;
+    if (!trackStats || recorded.current || total === 0) return;
     recorded.current = true;
     recordActivity({ questions: total, correct: score });
-  }, [total, score]);
+  }, [trackStats, total, score]);
 
   // Start the ring empty and fill it on the next frame so it animates in.
   const [shown, setShown] = useState(0);

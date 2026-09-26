@@ -74,20 +74,20 @@ export default async function HomePage() {
       <main className="flex-1">
         <section className="relative overflow-hidden">
           <div className="bg-dots pointer-events-none absolute inset-0" aria-hidden="true" />
-          <div className="relative mx-auto grid max-w-5xl items-center gap-10 px-5 pb-14 pt-14 sm:pt-20 lg:grid-cols-[1.15fr_0.85fr] lg:gap-6">
-            <div className="text-center lg:text-left">
+          <div className="relative mx-auto grid max-w-5xl items-start gap-10 px-5 pb-14 pt-14 sm:pt-20 lg:grid-cols-[1.15fr_minmax(420px,0.85fr)] lg:gap-6">
+            <div className="text-left">
               <Badge className="rounded-full px-3 py-1">
                 <CheckCircleIcon className="size-3.5" />
                 No account needed to try it
               </Badge>
-              <h1 className="mt-6 text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
+              <h1 className="mt-6 text-balance text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-[3.25rem] lg:leading-[1.1]">
                 Turn your notes into flashcards and quizzes
               </h1>
-              <p className="mx-auto mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">
+              <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg md:max-w-2xl md:text-xl lg:max-w-xl lg:text-lg">
                 Paste text or upload a PDF. Flip through cards you can sort as you go, or take a multiple-choice quiz
                 with explanations.
               </p>
-              <div className="mt-8 flex justify-center lg:justify-start">
+              <div className="mt-8">
                 <a href="#generate" className={buttonVariants('primary', 'lg')}>
                   Make a set from your notes
                   <ArrowRightIcon />
@@ -95,7 +95,9 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <HeroDeck />
+            <div className="hidden lg:block">
+              <HeroDeck />
+            </div>
           </div>
         </section>
 
