@@ -1,4 +1,5 @@
 import type { ZodError } from 'zod';
+import { GeminiRateLimitError } from './gemini-client';
 import {
   type Difficulty,
   type Flashcard,
@@ -45,6 +46,7 @@ export interface ModelClient {
 export type FailureCode =
   | 'empty_source'
   | 'model_unavailable'
+  | 'rate_limited'
   | 'unparseable_output'
   | 'invalid_output'
   | 'short_output';
@@ -96,8 +98,12 @@ export async function generateStudySet(
     } catch (err) {
       // The request never landed, so there is nothing to correct. Retrying the
       // same call on a transport error is a separate concern and belongs in the
-      // client, not in the validation loop.
+      // client, not in the validation loop. (429s are already retried with
+      // backoff inside the client — reaching here means those retries ran out.)
       diagnostics.push(`attempt ${attempt}: model call failed: ${describeError(err)}`);
+      if (err instanceof GeminiRateLimitError) {
+        return fail('rate_limited', input, diagnostics, attempt);
+      }
       return fail('model_unavailable', input, diagnostics, attempt);
     }
 
@@ -241,6 +247,8 @@ const MESSAGES: Record<Exclude<FailureCode, 'short_output'>, string> = {
     "There wasn't enough text to work with. Paste at least a few paragraphs, or upload a file with selectable text.",
   model_unavailable:
     "The generation service didn't respond. That's on our side — try again in a moment.",
+  rate_limited:
+    "The generation service is rate-limited right now — this happens on the free API tier under repeated use. Wait a minute and try again.",
   unparseable_output:
     "We couldn't generate reliable questions from that text. Try shorter or more structured notes.",
   invalid_output:

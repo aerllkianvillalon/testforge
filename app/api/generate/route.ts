@@ -14,6 +14,7 @@ export const maxDuration = 60;
 const STATUS: Record<FailureCode, number> = {
   empty_source: 400,
   model_unavailable: 502,
+  rate_limited: 429,
   unparseable_output: 422,
   invalid_output: 422,
   short_output: 422,
