@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { generateStudySet } from '@/lib/ai/generate-study-set';
 import { createGeminiClient } from '@/lib/ai/gemini-client';
 import { extractTextFromFile, MAX_SOURCE_CHARS, normalizeText } from '@/lib/extract-text';
+import { getCachedGeneration, setCachedGeneration } from '@/lib/ai/generation-cache';
 import { checkRateLimit, rateLimitIdentifier } from '@/lib/rate-limit';
 import { createClient } from '@/lib/supabase/server';
 import { generateRequestSchema } from '@/lib/validation';
 import type { FailureCode } from '@/lib/ai/generate-study-set';
+import type { CachedGeneration } from '@/lib/ai/generation-cache';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -86,6 +88,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const cached = await getCachedGeneration(sourceText, type, itemCount, difficulty);
+  if (cached) {
+    return NextResponse.json({
+      type: cached.type,
+      items: cached.items,
+      modelVersion: cached.modelVersion,
+      sourceExcerpt: sourceText.slice(0, 240),
+      truncated,
+      attempts: 0,
+      cached: true,
+    });
+  }
+
   let client;
   try {
     client = createGeminiClient();
@@ -112,6 +127,12 @@ export async function POST(request: Request) {
     );
   }
 
+  setCachedGeneration(sourceText, type, itemCount, difficulty, {
+    type: result.type,
+    items: result.items,
+    modelVersion: result.modelVersion,
+  } as CachedGeneration);
+
   return NextResponse.json({
     type: result.type,
     items: result.items,
@@ -119,5 +140,6 @@ export async function POST(request: Request) {
     sourceExcerpt: sourceText.slice(0, 240),
     truncated,
     attempts: result.attempts,
+    cached: false,
   });
 }
