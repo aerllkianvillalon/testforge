@@ -32,9 +32,10 @@ export function ForgotPasswordForm() {
     if (!email.trim() || pending || cooldown > 0) return;
     setPending(true);
     try {
-      await createClient().auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-      });
+      // Where the email link actually sends people is controlled by the
+      // Recovery email template in the Supabase dashboard, not by a
+      // redirectTo here — see the template note in app/auth/callback/route.ts.
+      await createClient().auth.resetPasswordForEmail(email.trim());
     } catch {
       // Network failure: still show the generic message. Retrying costs
       // nothing and a specific error here would be one more way to fingerprint

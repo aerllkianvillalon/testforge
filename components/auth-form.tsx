@@ -17,6 +17,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const linkInvalid = mode === 'login' && params.get('error') === 'link_invalid';
 
   function goToNext() {
     router.push(safeNextPath(params.get('next')));
@@ -74,6 +75,12 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
   return (
     <div className="space-y-4">
+      {linkInvalid && !error ? (
+        <Alert tone="error" title="That reset link didn't work">
+          It may have expired, already been used, or been opened by an email security scanner before you clicked
+          it. Use "Forgot password?" below to request a new one.
+        </Alert>
+      ) : null}
       <div>
         <Label htmlFor="email">Email</Label>
         <Input

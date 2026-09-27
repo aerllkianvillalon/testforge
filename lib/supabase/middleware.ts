@@ -33,8 +33,12 @@ export async function updateSession(request: NextRequest) {
 
   // /reset-password needs the short-lived session a recovery link creates,
   // so it is gated the same way as the account pages, not treated as a public
-  // auth page like /login and /register.
-  const requiresSession = path.startsWith('/dashboard') || path.startsWith('/profile') || path.startsWith('/reset-password');
+  // auth page like /login and /register. /reset-password/confirm is the
+  // exception: it's the step that *creates* that session (by verifying the
+  // token from the email link), so it has to be reachable without one.
+  const isResetConfirm = path === '/reset-password/confirm';
+  const requiresSession =
+    path.startsWith('/dashboard') || path.startsWith('/profile') || (path.startsWith('/reset-password') && !isResetConfirm);
 
   if (!user && requiresSession) {
     const url = request.nextUrl.clone();
