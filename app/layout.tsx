@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Analytics } from '@vercel/analytics/next';
 import { Inter } from 'next/font/google';
+import { cookies } from 'next/headers';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -28,20 +29,29 @@ export const viewport: Viewport = {
 /**
  * Runs before first paint so a dark-mode visitor never sees a white flash.
  * Follows the system setting until the person picks a theme, then remembers it.
+ * The choice is read from localStorage first, then from the `theme` cookie, so
+ * it still survives when storage is blocked (private tabs, in-app browsers).
+ * Storage access is wrapped separately so a blocked localStorage can no longer
+ * abort the whole script and leave the page stuck in light mode.
  */
-const themeScript = `(function(){try{
+const themeScript = `(function(){
 var root=document.documentElement;
+var stored=null;
+try{stored=localStorage.getItem('theme');}catch(e){}
+if(!stored){var m=document.cookie.match(/(?:^|; )theme=(dark|light)/);if(m)stored=m[1];}
 var media=window.matchMedia('(prefers-color-scheme: dark)');
-var stored=localStorage.getItem('theme');
 root.classList.toggle('dark',stored?stored==='dark':media.matches);
 media.addEventListener('change',function(e){
-if(!localStorage.getItem('theme'))root.classList.toggle('dark',e.matches);
+if(!stored)root.classList.toggle('dark',e.matches);
 });
-}catch(e){}})();`;
+})();`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The cookie lets the server render the right class on first byte, so a
+  // refresh never starts in light mode even if client storage is unavailable.
+  const theme = (await cookies()).get('theme')?.value;
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable}${theme === 'dark' ? ' dark' : ''}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

@@ -25,26 +25,29 @@ export function ResultPanel({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
-          <span className="grid size-8 place-items-center rounded-md bg-secondary text-secondary-foreground">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="flex shrink-0 items-center gap-2.5 whitespace-nowrap text-lg font-semibold tracking-tight">
+          <span className="grid size-8 shrink-0 place-items-center rounded-md bg-secondary text-secondary-foreground">
             <Icon />
           </span>
           {isCards ? `${set.items.length} flashcards` : `${set.items.length} questions`}
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
+          {/* On narrow screens (or when zoomed in) these collapse to icon-only
+              squares; the label stays in the DOM as sr-only for screen readers. */}
           <Button
             variant="secondary"
             size="sm"
+            className="max-sm:!w-8 max-sm:!px-0"
             onClick={() => downloadSet(set)}
             title={isCards ? 'Download as a tab-separated file that Anki can import' : 'Download as a CSV spreadsheet'}
           >
             <DownloadIcon />
-            {isCards ? 'Export for Anki' : 'Export CSV'}
+            <span className="max-sm:sr-only">{isCards ? 'Export for Anki' : 'Export CSV'}</span>
           </Button>
-          <Button variant="secondary" size="sm" onClick={onReset}>
+          <Button variant="secondary" size="sm" className="max-sm:!w-8 max-sm:!px-0" onClick={onReset} title="Start over">
             <UndoIcon />
-            Start over
+            <span className="max-sm:sr-only">Start over</span>
           </Button>
         </div>
       </div>

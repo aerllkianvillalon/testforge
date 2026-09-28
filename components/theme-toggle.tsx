@@ -15,8 +15,9 @@ export function ThemeToggle() {
     try {
       localStorage.setItem('theme', next);
     } catch {
-      // Storage can be blocked; the theme still switches for this visit.
+      // Storage can be blocked; the cookie below still remembers the choice.
     }
+    document.cookie = `theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
   }
 
   return (
