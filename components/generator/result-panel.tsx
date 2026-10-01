@@ -33,21 +33,33 @@ export function ResultPanel({
           {isCards ? `${set.items.length} flashcards` : `${set.items.length} questions`}
         </h2>
         <div className="flex shrink-0 items-center gap-2">
-          {/* On narrow screens (or when zoomed in) these collapse to icon-only
-              squares; the label stays in the DOM as sr-only for screen readers. */}
+          {/* Three states as the viewport (or zoom level) shrinks:
+              icon-only below 420px, a short label from 420px up, and the
+              full label from md (768px) up. The accessible name always
+              comes from aria-label, so screen readers get it regardless
+              of which text is visually shown. */}
           <Button
             variant="secondary"
             size="sm"
-            className="max-sm:!w-8 max-sm:!px-0"
+            className="max-[419px]:!w-8 max-[419px]:!px-0"
             onClick={() => downloadSet(set)}
             title={isCards ? 'Download as a tab-separated file that Anki can import' : 'Download as a CSV spreadsheet'}
+            aria-label={isCards ? 'Export for Anki' : 'Export CSV'}
           >
             <DownloadIcon />
-            <span className="max-sm:sr-only">{isCards ? 'Export for Anki' : 'Export CSV'}</span>
+            <span className="hidden min-[420px]:inline md:hidden">{isCards ? 'Export' : 'Export CSV'}</span>
+            <span className="hidden md:inline">{isCards ? 'Export for Anki' : 'Export CSV'}</span>
           </Button>
-          <Button variant="secondary" size="sm" className="max-sm:!w-8 max-sm:!px-0" onClick={onReset} title="Start over">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="max-[419px]:!w-8 max-[419px]:!px-0"
+            onClick={onReset}
+            title="Start over"
+            aria-label="Start over"
+          >
             <UndoIcon />
-            <span className="max-sm:sr-only">Start over</span>
+            <span className="hidden min-[420px]:inline">Start over</span>
           </Button>
         </div>
       </div>

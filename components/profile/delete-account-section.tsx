@@ -72,16 +72,29 @@ export function DeleteAccountSection({ itemNoun }: { itemNoun: string }) {
               spellCheck={false}
             />
           </div>
-          <div className="flex flex-wrap gap-2">
+          {/* Stays on one line at any zoom level: both buttons use the
+              compact "sm" size, and the destructive label shortens below
+              420px so "Permanently delete account" + "Cancel" never has to
+              wrap or spill out of the card. */}
+          <div className="flex items-center gap-2">
             <Button
               variant="destructive"
+              size="sm"
               onClick={confirmDelete}
               disabled={typed !== CONFIRM_WORD || pending}
             >
-              {pending ? 'Deleting…' : 'Permanently delete account'}
+              {pending ? (
+                'Deleting…'
+              ) : (
+                <>
+                  <span className="max-[419px]:hidden">Permanently delete account</span>
+                  <span className="hidden max-[419px]:inline">Delete account</span>
+                </>
+              )}
             </Button>
             <Button
               variant="ghost"
+              size="sm"
               onClick={() => {
                 setConfirming(false);
                 setTyped('');
