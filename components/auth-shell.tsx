@@ -20,7 +20,7 @@ export function AuthShell({
       <div className="relative w-full max-w-md">
         <Card>
           <CardHeader className="items-center text-center">
-            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand/10 text-brand">
+            <span className="grid size-11 shrink-0 place-items-center text-foreground">
               <Icon className="size-5" />
             </span>
             <CardTitle className="mt-3 text-2xl">{title}</CardTitle>

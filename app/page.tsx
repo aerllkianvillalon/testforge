@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/icons';
 import { MAX_SOURCE_CHARS } from '@/lib/limits';
 import { getSessionUser } from '@/lib/supabase/server';
-import { cn } from '@/lib/utils';
 
 const features = [
   {
@@ -116,31 +115,18 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-9 grid gap-x-8 gap-y-9 sm:grid-cols-2">
-            {features.map(({ icon: Icon, title, body }, i) => {
-              // The save/dashboard feature is the one thing worth making the
-              // reader's eye land on first — everything else stays quiet.
-              const emphasize = i === 2;
-              return (
-                <div key={title} className="flex gap-4">
-                  <span
-                    className={cn(
-                      'grid size-10 shrink-0 place-items-center rounded-full',
-                      // text-white, not text-primary-foreground: the brand
-                      // orange is fixed across themes, so its icon needs a
-                      // fixed contrast color too — primary-foreground flips
-                      // to near-black in dark mode and would go muddy here.
-                      emphasize ? 'bg-brand text-white' : 'bg-brand/10 text-brand',
-                    )}
-                  >
-                    <Icon className="size-5" />
-                  </span>
-                  <div className="pt-0.5">
-                    <h3 className="text-[15px] font-semibold leading-tight">{title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{body}</p>
-                  </div>
+            {features.map(({ icon: Icon, title, body }) => (
+              <div key={title} className="flex gap-4">
+                {/* Plain icon: black on light, white on dark, via the theme token. */}
+                <span className="grid size-10 shrink-0 place-items-center text-foreground">
+                  <Icon className="size-5" />
+                </span>
+                <div className="pt-0.5">
+                  <h3 className="text-[15px] font-semibold leading-tight">{title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{body}</p>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </section>
 

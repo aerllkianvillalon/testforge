@@ -42,7 +42,7 @@ export function StudyActivity() {
           </div>
 
           <dl className="mt-4 grid grid-cols-3 gap-4">
-            <Stat label="Day streak" value={String(streak)} icon={streak > 0 ? <FlameIcon className="size-4 text-warning" /> : null} />
+            <Stat label="Day streak" value={String(streak)} icon={streak > 0 ? <FlameIcon className="size-4" /> : null} />
             <Stat label="Cards reviewed" value={String(cards)} hint={cards > 0 ? `${known} known` : undefined} />
             <Stat
               label="Quiz accuracy"
