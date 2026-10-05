@@ -1,11 +1,22 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { MIN_PASSWORD_LENGTH } from '@/lib/site';
-import { checkSignupRateLimit, rateLimitIdentifier } from '@/lib/rate-limit';
+import {
+  checkSignupRateLimit,
+  clientIp,
+  rateLimitResponse,
+  type RateLimitMessages,
+} from '@/lib/rate-limit';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
+
+const RATE_LIMIT_MESSAGES: RateLimitMessages = {
+  daily: 'Too many accounts created from this connection today. Try again tomorrow.',
+  unconfigured: 'Account creation is temporarily unavailable.',
+  burst: (seconds) => `Too many attempts. Try again in ${seconds} seconds.`,
+};
 
 const registerSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
@@ -30,20 +41,9 @@ const registerSchema = z.object({
  */
 export async function POST(request: Request) {
   // No session exists yet, so signups are throttled by IP alone.
-  const identifier = rateLimitIdentifier(request, null);
-  const ip = identifier.startsWith('ip:') ? identifier.slice(3) : identifier;
-  const verdict = await checkSignupRateLimit(ip);
+  const verdict = await checkSignupRateLimit(clientIp(request));
   if (!verdict.allowed) {
-    const message =
-      verdict.scope === 'daily'
-        ? 'Too many accounts created from this connection today. Try again tomorrow.'
-        : verdict.scope === 'unconfigured'
-          ? 'Account creation is temporarily unavailable.'
-          : `Too many attempts. Try again in ${verdict.retryAfterSeconds} seconds.`;
-    return NextResponse.json(
-      { error: message },
-      { status: 429, headers: { 'Retry-After': String(verdict.retryAfterSeconds) } },
-    );
+    return rateLimitResponse(verdict, RATE_LIMIT_MESSAGES);
   }
 
   let body: unknown;

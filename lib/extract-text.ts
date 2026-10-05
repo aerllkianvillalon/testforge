@@ -1,7 +1,5 @@
 import 'server-only';
-
-export const MAX_FILE_BYTES = 5 * 1024 * 1024;
-export const MAX_SOURCE_CHARS = 8_000;
+import { fileTooLargeMessage, MAX_FILE_BYTES, MAX_SOURCE_CHARS } from '@/lib/limits';
 
 export type ExtractionResult =
   | { ok: true; text: string; truncated: boolean }
@@ -18,7 +16,7 @@ const ACCEPTED = new Set(['application/pdf', 'text/plain', '']);
  */
 export async function extractTextFromFile(file: File): Promise<ExtractionResult> {
   if (file.size > MAX_FILE_BYTES) {
-    return { ok: false, message: `That file is ${formatMb(file.size)}. The limit is 5MB.` };
+    return { ok: false, message: fileTooLargeMessage(file.size) };
   }
   if (file.size === 0) {
     return { ok: false, message: 'That file is empty.' };
@@ -60,14 +58,15 @@ export function normalizeText(raw: string): string {
     .trim();
 }
 
-function finalize(raw: string, emptyMessage: string): ExtractionResult {
+/** Normalizes and caps pasted or extracted text at what the model will be shown. */
+export function clampSource(raw: string): { text: string; truncated: boolean } {
   const text = normalizeText(raw);
-  if (!text) return { ok: false, message: emptyMessage };
-
   const truncated = text.length > MAX_SOURCE_CHARS;
-  return { ok: true, text: truncated ? text.slice(0, MAX_SOURCE_CHARS) : text, truncated };
+  return { text: truncated ? text.slice(0, MAX_SOURCE_CHARS) : text, truncated };
 }
 
-function formatMb(bytes: number): string {
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+function finalize(raw: string, emptyMessage: string): ExtractionResult {
+  const clamped = clampSource(raw);
+  if (!clamped.text) return { ok: false, message: emptyMessage };
+  return { ok: true, ...clamped };
 }

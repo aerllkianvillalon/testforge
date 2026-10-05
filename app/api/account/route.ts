@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
+import { getAuthContext } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
@@ -14,10 +14,7 @@ export const runtime = 'nodejs';
  * with it. Nothing here has to touch that table directly.
  */
 export async function DELETE() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getAuthContext();
 
   if (!user) {
     return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });

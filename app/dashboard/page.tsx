@@ -7,16 +7,13 @@ import { SiteHeader } from '@/components/site-header';
 import { buttonVariants } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { SparklesIcon } from '@/components/ui/icons';
-import { createClient } from '@/lib/supabase/server';
+import { getAuthContext } from '@/lib/supabase/server';
 import type { StudySetRow } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getAuthContext();
 
   // Middleware already redirects unauthenticated users; this is the second
   // check, so a middleware matcher change can't quietly expose the page.

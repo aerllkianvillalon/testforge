@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/field';
 import { FlashcardReview } from '@/components/flashcards/flashcard-review';
 import { QuizRunner } from '@/components/quiz/quiz-runner';
 import { DownloadIcon, LayersIcon, ListChecksIcon, UndoIcon } from '@/components/ui/icons';
+import { NETWORK_ERROR, readErrorMessage } from '@/lib/api-client';
 import { downloadSet } from '@/lib/export';
 import type { GeneratedSet } from '@/lib/types';
 
@@ -116,14 +117,13 @@ function SavePrompt({ set, signedIn }: { set: GeneratedSet; signedIn: boolean })
       });
 
       if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        setError(payload?.error ?? "We couldn't save that set.");
+        setError(await readErrorMessage(response, "We couldn't save that set."));
         setState('idle');
         return;
       }
       setState('saved');
     } catch {
-      setError('The request never reached us. Check your connection and try again.');
+      setError(NETWORK_ERROR);
       setState('idle');
     }
   }

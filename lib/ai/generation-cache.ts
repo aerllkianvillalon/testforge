@@ -1,7 +1,8 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
-import { Redis } from '@upstash/redis';
-import type { Difficulty, Flashcard, QuizItem, StudySetType } from './schemas';
+import { redis } from '@/lib/redis';
+import type { GenerateInput } from './generate-study-set';
+import type { StudySetContent } from './schemas';
 
 /**
  * Generation is the one paid, rate-limited call in this app. Identical
@@ -20,34 +21,22 @@ import type { Difficulty, Flashcard, QuizItem, StudySetType } from './schemas';
  * same way — generation should never be blocked by a cache outage.
  */
 
-const configured = Boolean(
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
-);
-const redis = configured ? Redis.fromEnv() : null;
-
 // A week: long enough that the sample notes and any popular pasted text stay
 // warm, short enough that a prompt/schema change ships without a manual flush.
 const TTL_SECONDS = 60 * 60 * 24 * 7;
 const PREFIX = 'testforge:gen-cache';
 
-export type CachedGeneration =
-  | { type: 'flashcards'; items: Flashcard[]; modelVersion: string }
-  | { type: 'quiz'; items: QuizItem[]; modelVersion: string };
+export type CachedGeneration = StudySetContent & { modelVersion: string };
 
-function cacheKey(sourceText: string, type: StudySetType, itemCount: number, difficulty: Difficulty): string {
+export function cacheKey({ sourceText, type, itemCount, difficulty }: GenerateInput): string {
   const hash = createHash('sha256').update(sourceText.trim()).digest('hex');
   return `${PREFIX}:${type}:${itemCount}:${difficulty}:${hash}`;
 }
 
-export async function getCachedGeneration(
-  sourceText: string,
-  type: StudySetType,
-  itemCount: number,
-  difficulty: Difficulty,
-): Promise<CachedGeneration | null> {
+export async function getCachedGeneration(input: GenerateInput): Promise<CachedGeneration | null> {
   if (!redis) return null;
   try {
-    const value = await redis.get<CachedGeneration>(cacheKey(sourceText, type, itemCount, difficulty));
+    const value = await redis.get<CachedGeneration>(cacheKey(input));
     return value ?? null;
   } catch (err) {
     // A cache outage should degrade to "generate normally," never break generation.
@@ -60,15 +49,9 @@ export async function getCachedGeneration(
  * Fire-and-forget by design: a cache write failing or running slow should
  * never delay or break the response the user is already looking at.
  */
-export function setCachedGeneration(
-  sourceText: string,
-  type: StudySetType,
-  itemCount: number,
-  difficulty: Difficulty,
-  result: CachedGeneration,
-): void {
+export function setCachedGeneration(input: GenerateInput, result: CachedGeneration): void {
   if (!redis) return;
   redis
-    .set(cacheKey(sourceText, type, itemCount, difficulty), result, { ex: TTL_SECONDS })
+    .set(cacheKey(input), result, { ex: TTL_SECONDS })
     .catch((err) => console.warn('generation cache write failed, continuing without it:', err));
 }

@@ -34,6 +34,24 @@ export const quizItemSchema = z
   });
 export type QuizItem = z.infer<typeof quizItemSchema>;
 
+/**
+ * A set of items together with which kind it is. Every other "type + items"
+ * shape in the app (generation results, cache entries, saved rows, exports) is
+ * built from this one, so narrowing on `type` narrows `items` everywhere.
+ */
+export type StudySetContent =
+  | { type: 'flashcards'; items: Flashcard[] }
+  | { type: 'quiz'; items: QuizItem[] };
+
+/**
+ * Pairs validated items with their type. Zod's per-type schema can't carry the
+ * correlation between `type` and `items` through a runtime lookup, so this is
+ * the single place that has to assert it.
+ */
+export function studySetContent(type: StudySetType, items: Flashcard[] | QuizItem[]): StudySetContent {
+  return { type, items } as StudySetContent;
+}
+
 export const flashcardSetSchema = z.object({ items: z.array(flashcardSchema).min(1) });
 export const quizSetSchema = z.object({ items: z.array(quizItemSchema).min(1) });
 

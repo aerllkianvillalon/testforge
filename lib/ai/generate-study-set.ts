@@ -2,11 +2,11 @@ import type { ZodError } from 'zod';
 import { GeminiRateLimitError } from './gemini-client';
 import {
   type Difficulty,
-  type Flashcard,
-  type QuizItem,
+  type StudySetContent,
   type StudySetType,
   geminiResponseSchemaFor,
   setSchemaFor,
+  studySetContent,
 } from './schemas';
 
 /**
@@ -51,9 +51,7 @@ export type FailureCode =
   | 'invalid_output'
   | 'short_output';
 
-export type GenerationSuccess =
-  | { ok: true; type: 'flashcards'; items: Flashcard[]; modelVersion: string; attempts: number }
-  | { ok: true; type: 'quiz'; items: QuizItem[]; modelVersion: string; attempts: number };
+export type GenerationSuccess = { ok: true; modelVersion: string; attempts: number } & StudySetContent;
 
 export type GenerationFailure = {
   ok: false;
@@ -150,22 +148,12 @@ export async function generateStudySet(
       );
     }
 
-    const trimmed = items.slice(0, input.itemCount);
-    return input.type === 'flashcards'
-      ? {
-          ok: true,
-          type: 'flashcards',
-          items: trimmed as Flashcard[],
-          modelVersion: client.modelVersion,
-          attempts: attempt,
-        }
-      : {
-          ok: true,
-          type: 'quiz',
-          items: trimmed as QuizItem[],
-          modelVersion: client.modelVersion,
-          attempts: attempt,
-        };
+    return {
+      ok: true,
+      ...studySetContent(input.type, items.slice(0, input.itemCount)),
+      modelVersion: client.modelVersion,
+      attempts: attempt,
+    };
   }
 
   return fail(lastCode, input, diagnostics, MAX_ATTEMPTS);

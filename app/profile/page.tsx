@@ -7,15 +7,12 @@ import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeftIcon } from '@/components/ui/icons';
-import { createClient } from '@/lib/supabase/server';
+import { getSessionUser } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   // Middleware already redirects unauthenticated visitors away from /profile;
   // this is the second check, kept in step with the dashboard page's own.

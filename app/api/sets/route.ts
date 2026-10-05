@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getAuthContext } from '@/lib/supabase/server';
 import { saveSetSchema } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getAuthContext();
 
   if (!user) {
     return NextResponse.json({ error: 'Sign in to save a set.' }, { status: 401 });
