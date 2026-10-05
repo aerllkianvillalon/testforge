@@ -12,6 +12,7 @@ import { Card, CardBody } from '@/components/ui/card';
 import { ArrowRightIcon, CheckIcon, XIcon } from '@/components/ui/icons';
 import { Kbd } from '@/components/ui/kbd';
 import { indices, shuffled } from '@/lib/shuffle';
+import { recordActivity } from '@/lib/study-stats';
 import { cn } from '@/lib/utils';
 import type { QuizItem } from '@/lib/ai/schemas';
 
@@ -42,6 +43,8 @@ export function QuizRunner({
   const [answers, setAnswers] = useState<boolean[]>([]);
   const [picks, setPicks] = useState<number[]>([]);
   const [shuffleOptions, setShuffleOptions] = useState(false);
+  const [run, setRun] = useState(0); // bumps on every restart
+  const recordedRun = useRef(-1);
   const nextButton = useRef<HTMLButtonElement>(null);
   const focus = useFocusMode();
   const speech = useSpeech();
@@ -62,6 +65,14 @@ export function QuizRunner({
     if (selected !== null && selected === question.correctIndex) nextButton.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
+
+  // Count each finished quiz once toward the study stats. This lives here, not
+  // in the results screen, because toggling focus mode remounts that screen.
+  useEffect(() => {
+    if (!trackStats || !finished || answers.length === 0 || recordedRun.current === run) return;
+    recordedRun.current = run;
+    recordActivity({ questions: answers.length, correct: score });
+  }, [trackStats, finished, run, answers.length, score]);
 
   /** What "Read aloud" reads: the question and its options before answering, the verdict and explanation after. */
   function speechText(): string {
@@ -112,6 +123,7 @@ export function QuizRunner({
     setScore(0);
     setAnswers([]);
     setPicks([]);
+    setRun((r) => r + 1);
   }
 
   useStudyKeys(!finished, (event) => {
@@ -143,7 +155,6 @@ export function QuizRunner({
           onRestart={restart}
           focus={focus.focus}
           onExitFocus={focus.exit}
-          trackStats={trackStats}
         />
       </FocusShell>
     );

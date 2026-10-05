@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody } from '@/components/ui/card';
 import { Confetti } from '@/components/ui/confetti';
 import { ChevronDownIcon, UndoIcon } from '@/components/ui/icons';
-import { recordActivity } from '@/lib/study-stats';
 import type { QuizItem } from '@/lib/ai/schemas';
 
 const CELEBRATE_AT = 80; // percent
@@ -21,7 +20,6 @@ export function QuizResults({
   onRestart,
   focus,
   onExitFocus,
-  trackStats,
 }: {
   items: QuizItem[];
   /** The order the questions were asked in; `answers`/`picks` are in this order. */
@@ -32,20 +30,10 @@ export function QuizResults({
   onRestart: () => void;
   focus: boolean;
   onExitFocus: () => void;
-  trackStats: boolean;
 }) {
   const total = answers.length;
   const percent = total === 0 ? 0 : Math.round((score / total) * 100);
   const missed = answers.map((correct, i) => (correct ? null : i)).filter((n): n is number => n !== null);
-  const recorded = useRef(false);
-
-  // Count the finished quiz once toward the study stats.
-  useEffect(() => {
-    if (!trackStats || recorded.current || total === 0) return;
-    recorded.current = true;
-    recordActivity({ questions: total, correct: score });
-  }, [trackStats, total, score]);
-
   // Start the ring empty and fill it on the next frame so it animates in.
   const [shown, setShown] = useState(0);
   useEffect(() => {

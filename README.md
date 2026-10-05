@@ -9,7 +9,7 @@ Next.js (App Router) · TypeScript · Tailwind · Supabase (Auth + Postgres with
 ```bash
 npm install
 cp .env.example .env.local   # fill in the values
-npm run test                 # 20 tests, no network or API key needed
+npm run test                 # no network or API key needed
 npm run dev
 ```
 
@@ -54,7 +54,7 @@ The model client is injected rather than imported, which is what makes all of th
 
 ## Rate limiting
 
-`/api/generate` has real marginal cost: every request is a paid model call, unlike the GWA calculator's free client-side arithmetic. Two Upstash windows are enforced (`lib/rate-limit.ts`): a short burst window so a stuck retry loop stops quickly, and a daily window so a patient scraper can't drain the quota overnight.
+`/api/generate` has real marginal cost: every request is a paid model call, unlike the GWA calculator's free client-side arithmetic. Two Upstash windows are enforced per policy (`lib/rate-limit.ts`): a short burst window so a stuck retry loop stops quickly, and a daily window so a patient scraper can't drain the quota overnight.
 
 Signed-in users are keyed by user id rather than IP, so a shared campus NAT doesn't lock out a whole building.
 
@@ -102,7 +102,9 @@ The UI follows the shadcn/ui approach: semantic tokens, hairline borders, a neut
 - **Export.** `lib/export.ts`. Flashcards download as tab-separated text for Anki's File > Import; quizzes as CSV. Spreadsheet cells that start with `=`, `+`, `-` or `@` are prefixed with an apostrophe, because the text comes from a language model and shouldn't be able to run as a formula.
 - **Landing page.** A live, flippable demo card in the hero (`components/hero-deck.tsx`), a "Try sample notes" button, `Ctrl/⌘ + Enter` to generate, and a card-shuffle animation while generating.
 
-Tests for the streak and export logic are in `lib/study-stats.test.ts` and `lib/export.test.ts` and run with the rest via `npm test`.
+- **Structure.** What flashcards and quizzes share lives in `components/study/` (speech, focus mode, toolbar, keyboard hook). The flashcard round logic is a pure reducer in `lib/review-rounds.ts` and the shuffle in `lib/shuffle.ts`, so both are unit-tested without a DOM.
+
+Tests for the streak, export, round, shuffle, rate-limit and text-extraction logic live next to the code in `lib/` and run with the rest via `npm test`.
 
 ## Accounts, without an email step
 
