@@ -56,9 +56,3 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
     );
   },
 );
-
-export const PasswordInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
-  function PasswordInput(props, ref) {
-    return <Input ref={ref} type="password" {...props} />;
-  },
-);
