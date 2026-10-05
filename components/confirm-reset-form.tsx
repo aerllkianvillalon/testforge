@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { NETWORK_ERROR } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
 
 type Status = 'checking' | 'ready' | 'verifying' | 'error' | 'missing';
@@ -60,7 +61,7 @@ export function ConfirmResetForm() {
       router.push('/reset-password');
       router.refresh();
     } catch {
-      setError('The request never reached us. Check your connection and try again.');
+      setError(NETWORK_ERROR);
       setStatus('error');
     }
   }

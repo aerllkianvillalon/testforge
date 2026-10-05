@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/icons";
 import { FlashcardReview } from "@/components/flashcards/flashcard-review";
 import { QuizRunner } from "@/components/quiz/quiz-runner";
+import { NETWORK_ERROR, readErrorMessage } from "@/lib/api-client";
 import { downloadSet } from "@/lib/export";
 import { cn } from "@/lib/utils";
 import type { Flashcard, QuizItem } from "@/lib/ai/schemas";
@@ -35,16 +36,13 @@ export function SetList({ sets }: { sets: StudySetRow[] }) {
     try {
       const response = await fetch(`/api/sets/${id}`, { method: "DELETE" });
       if (!response.ok && response.status !== 204) {
-        const payload = await response.json().catch(() => null);
-        setError(payload?.error ?? "We couldn't delete that set.");
+        setError(await readErrorMessage(response, "We couldn't delete that set."));
         return;
       }
       setRows((prev) => prev.filter((row) => row.id !== id));
       if (openId === id) setOpenId(null);
     } catch {
-      setError(
-        "The request never reached us. Check your connection and try again.",
-      );
+      setError(NETWORK_ERROR);
     } finally {
       setPendingId(null);
       setConfirmingId(null);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/field';
+import { NETWORK_ERROR, readErrorMessage } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
 
 const CONFIRM_WORD = 'DELETE';
@@ -29,8 +30,7 @@ export function DeleteAccountSection({ itemNoun }: { itemNoun: string }) {
     try {
       const response = await fetch('/api/account', { method: 'DELETE' });
       if (!response.ok && response.status !== 204) {
-        const payload = await response.json().catch(() => null);
-        setError(payload?.error ?? "We couldn't delete your account. Try again.");
+        setError(await readErrorMessage(response, "We couldn't delete your account. Try again."));
         return;
       }
       // Belt and braces: the server already cleared the session cookie.
@@ -38,7 +38,7 @@ export function DeleteAccountSection({ itemNoun }: { itemNoun: string }) {
       router.push('/');
       router.refresh();
     } catch {
-      setError('The request never reached us. Check your connection and try again.');
+      setError(NETWORK_ERROR);
     } finally {
       setPending(false);
     }

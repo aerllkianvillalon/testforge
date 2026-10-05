@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { getAuthContext } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
@@ -12,10 +12,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     return NextResponse.json({ error: 'Unknown set.' }, { status: 400 });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getAuthContext();
 
   if (!user) {
     return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });

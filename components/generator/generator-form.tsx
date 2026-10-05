@@ -14,13 +14,12 @@ import {
   UploadIcon,
 } from '@/components/ui/icons';
 import { Segmented } from '@/components/ui/segmented';
+import { NETWORK_ERROR } from '@/lib/api-client';
+import { fileTooLargeMessage, MAX_FILE_BYTES, MAX_FILE_MB, MAX_SOURCE_CHARS } from '@/lib/limits';
 import { cn } from '@/lib/utils';
 import { MAX_ITEMS, MIN_ITEMS } from '@/lib/validation';
 import type { GeneratedSet } from '@/lib/types';
 import type { Difficulty, StudySetType } from '@/lib/ai/schemas';
-
-const MAX_CHARS = 8000;
-const MAX_BYTES = 5 * 1024 * 1024;
 
 // Real material, so "Try sample notes" produces a genuinely useful first set.
 const SAMPLE_NOTES = `Photosynthesis is the process by which plants, algae and some bacteria convert light energy into chemical energy stored in glucose. It takes place in chloroplasts, which contain the green pigment chlorophyll.
@@ -42,7 +41,7 @@ export function GeneratorForm({ onResult }: { onResult: (set: GeneratedSet) => v
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const overLimit = text.length > MAX_CHARS;
+  const overLimit = text.length > MAX_SOURCE_CHARS;
   const canSubmit = !pending && (mode === 'paste' ? text.trim().length > 0 && !overLimit : Boolean(file));
 
   function pickFile(next: File | null) {
@@ -71,8 +70,8 @@ export function GeneratorForm({ onResult }: { onResult: (set: GeneratedSet) => v
 
     // Mirrors the server-side cap so the common mistake gets an instant answer.
     // The server check is the one that counts.
-    if (mode === 'upload' && file && file.size > MAX_BYTES) {
-      setError(`That file is ${(file.size / 1024 / 1024).toFixed(1)}MB. The limit is 5MB.`);
+    if (mode === 'upload' && file && file.size > MAX_FILE_BYTES) {
+      setError(fileTooLargeMessage(file.size));
       return;
     }
 
@@ -94,7 +93,7 @@ export function GeneratorForm({ onResult }: { onResult: (set: GeneratedSet) => v
       }
 
       if (payload.truncated) {
-        setNotice(`Your notes were longer than ${MAX_CHARS.toLocaleString()} characters, so only the first part was used.`);
+        setNotice(`Your notes were longer than ${MAX_SOURCE_CHARS.toLocaleString()} characters, so only the first part was used.`);
       }
 
       onResult({
@@ -104,13 +103,13 @@ export function GeneratorForm({ onResult }: { onResult: (set: GeneratedSet) => v
         sourceExcerpt: payload.sourceExcerpt,
       });
     } catch {
-      setError('The request never reached us. Check your connection and try again.');
+      setError(NETWORK_ERROR);
     } finally {
       setPending(false);
     }
   }
 
-  const nearLimit = text.length > MAX_CHARS * 0.9;
+  const nearLimit = text.length > MAX_SOURCE_CHARS * 0.9;
 
   return (
     <Card className="text-left shadow-md">
@@ -148,7 +147,7 @@ export function GeneratorForm({ onResult }: { onResult: (set: GeneratedSet) => v
                   overLimit ? 'text-destructive' : nearLimit ? 'text-warning' : 'text-muted-foreground',
                 )}
               >
-                {text.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters
+                {text.length.toLocaleString()} / {MAX_SOURCE_CHARS.toLocaleString()} characters
                 {overLimit ? ' — trim this down before generating.' : ''}
               </p>
               {text.length === 0 ? (
@@ -201,7 +200,7 @@ export function GeneratorForm({ onResult }: { onResult: (set: GeneratedSet) => v
                 <span>
                   <span className="block text-sm font-medium">Drop a PDF or text file here, or click to browse</span>
                   <span className="mt-1 block text-xs text-muted-foreground">
-                    Up to 5MB. Scanned PDFs without selectable text won&apos;t work — paste the text instead.
+                    Up to {MAX_FILE_MB}MB. Scanned PDFs without selectable text won&apos;t work — paste the text instead.
                   </span>
                 </span>
               )}

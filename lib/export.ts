@@ -1,4 +1,4 @@
-import type { Flashcard, QuizItem, StudySetType } from '@/lib/ai/schemas';
+import type { Flashcard, QuizItem, StudySetContent, StudySetType } from '@/lib/ai/schemas';
 
 /**
  * Export a set so it can leave the app.
@@ -51,18 +51,14 @@ export function exportFileName(type: StudySetType, title?: string | null, now: D
   return `${base}.${type === 'flashcards' ? 'txt' : 'csv'}`;
 }
 
-export type ExportableSet =
-  | { type: 'flashcards'; items: Flashcard[] }
-  | { type: 'quiz'; items: QuizItem[] };
-
-export function buildExport(set: ExportableSet, title?: string | null): { fileName: string; mime: string; content: string } {
+export function buildExport(set: StudySetContent, title?: string | null): { fileName: string; mime: string; content: string } {
   return set.type === 'flashcards'
     ? { fileName: exportFileName('flashcards', title), mime: 'text/plain;charset=utf-8', content: flashcardsToAnki(set.items) }
     : { fileName: exportFileName('quiz', title), mime: 'text/csv;charset=utf-8', content: quizToCsv(set.items) };
 }
 
 /** Browser only: hands the file to the download manager. */
-export function downloadSet(set: ExportableSet, title?: string | null): void {
+export function downloadSet(set: StudySetContent, title?: string | null): void {
   const { fileName, mime, content } = buildExport(set, title);
   const url = URL.createObjectURL(new Blob([content], { type: mime }));
   const link = document.createElement('a');

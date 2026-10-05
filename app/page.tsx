@@ -17,6 +17,7 @@ import {
   UploadIcon,
   UserIcon,
 } from '@/components/ui/icons';
+import { MAX_SOURCE_CHARS } from '@/lib/limits';
 import { getSessionUser } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 
@@ -52,7 +53,7 @@ const faqs = [
   {
     icon: FileTextIcon,
     question: 'How much of my notes get used?',
-    answer: 'Only the first 8,000 characters of a long document are used. Split big notes into sections.',
+    answer: `Only the first ${MAX_SOURCE_CHARS.toLocaleString('en-US')} characters of a long document are used. Split big notes into sections.`,
   },
   {
     icon: UploadIcon,

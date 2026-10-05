@@ -35,10 +35,20 @@ export async function createClient() {
   );
 }
 
-export async function getSessionUser() {
+/**
+ * The request's Supabase client and the verified user (or null), in one call.
+ * `getUser()` revalidates the token with Supabase; `getSession()` only decodes
+ * the cookie, so it can't be trusted for an access decision.
+ */
+export async function getAuthContext() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user;
+  return { supabase, user };
+}
+
+/** For callers that only need to know who is signed in, not to query as them. */
+export async function getSessionUser() {
+  return (await getAuthContext()).user;
 }

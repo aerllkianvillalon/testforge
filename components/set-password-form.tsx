@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/field';
 import { describePasswordError } from '@/lib/password-errors';
 import { MIN_PASSWORD_LENGTH } from '@/lib/site';
+import { NETWORK_ERROR } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
 
 /**
@@ -48,7 +49,7 @@ export function SetPasswordForm({
       setConfirm('');
       onSuccess();
     } catch {
-      setError('The request never reached us. Check your connection and try again.');
+      setError(NETWORK_ERROR);
     } finally {
       setPending(false);
     }
