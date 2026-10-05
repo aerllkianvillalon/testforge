@@ -36,9 +36,11 @@ const generalLinks = [{ href: '/privacy', label: 'Privacy' }] as const;
  * single slide-over panel — grouped into labeled sections (MENU, then
  * account actions, then GENERAL) with an icon per row, mirroring the
  * reference pattern rather than a flat list of plain links.
- * Only rendered below `sm`; the desktop header keeps its own inline layout.
+ * Signed out, it is only shown below `sm` (the desktop header keeps its inline
+ * layout). Signed in, it is shown at every width.
  */
 export function MobileNav({ email }: { email: string | null }) {
+  // Signed in: the menu is the header's only control at every width.
   const [open, setOpen] = useState(false);
   // Portals touch `document`, so render nothing extra until after mount —
   // matches the guard flashcard-review.tsx uses for the same reason.
@@ -83,7 +85,7 @@ export function MobileNav({ email }: { email: string | null }) {
   }
 
   return (
-    <div className="sm:hidden">
+    <div className={email ? undefined : 'sm:hidden'}>
       <Button variant="ghost" size="icon" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
         <MenuIcon />
       </Button>
