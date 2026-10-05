@@ -26,6 +26,7 @@ export function SetList({ sets }: { sets: StudySetRow[] }) {
   const [rows, setRows] = useState(sets);
   const [openId, setOpenId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function remove(id: string) {
@@ -46,6 +47,7 @@ export function SetList({ sets }: { sets: StudySetRow[] }) {
       );
     } finally {
       setPendingId(null);
+      setConfirmingId(null);
     }
   }
 
@@ -107,7 +109,10 @@ export function SetList({ sets }: { sets: StudySetRow[] }) {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => setOpenId(open ? null : row.id)}
+                  onClick={() => {
+                    setOpenId(open ? null : row.id);
+                    setConfirmingId(null);
+                  }}
                   aria-expanded={open}
                   aria-controls={panelId}
                 >
@@ -140,19 +145,40 @@ export function SetList({ sets }: { sets: StudySetRow[] }) {
                   <DownloadIcon className="size-3.5" />
                   Export
                 </Button>
-                <Button
-                  size="sm"
-                  variant="danger"
-                  onClick={() => remove(row.id)}
-                  disabled={pendingId === row.id}
-                >
-                  {pendingId === row.id ? (
-                    <SpinnerIcon className="size-3.5 animate-spin" />
-                  ) : (
+                {confirmingId === row.id ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => remove(row.id)}
+                      disabled={pendingId === row.id}
+                    >
+                      {pendingId === row.id ? (
+                        <SpinnerIcon className="size-3.5 animate-spin" />
+                      ) : (
+                        <TrashIcon className="size-3.5" />
+                      )}
+                      {pendingId === row.id ? "Deleting…" : "Confirm delete"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setConfirmingId(null)}
+                      disabled={pendingId === row.id}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => setConfirmingId(row.id)}
+                  >
                     <TrashIcon className="size-3.5" />
-                  )}
-                  {pendingId === row.id ? "Deleting…" : "Delete"}
-                </Button>
+                    Delete
+                  </Button>
+                )}
               </div>
 
               <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">

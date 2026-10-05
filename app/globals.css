@@ -24,6 +24,9 @@
     --input: 240 5.9% 74%;
     --ring: 240 5.9% 10%;
     --radius: 0.625rem;
+    /* Pulled from the logo artwork (app/icon.svg, #ce6d18) — same in both
+       themes since it's brand identity, not a semantic light/dark tone. */
+    --brand: 28 79% 45%;
     color-scheme: light;
   }
 
@@ -40,7 +43,7 @@
     --muted-foreground: 240 5% 64.9%;
     --accent: 240 3.7% 15.9%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 72% 60%;
+    --destructive: 0 72% 51%; /* was 60% — failed WCAG AA (3.66:1) for white button text; 51% passes at 4.59:1 */
     --destructive-foreground: 0 0% 98%;
     --success: 142 60% 50%;
     --warning: 38 92% 55%;
@@ -406,4 +409,63 @@
   background-size: 22px 22px;
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 25%, transparent 75%);
   mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 25%, transparent 75%);
+}
+/* ==== generator result header: responsive to the row's own width, not the
+   viewport ============================================================
+   Export/Start over start icon-only, pick up a short label once the row
+   itself has room, and the full label once there's more still. Driven by a
+   container query on the row (not a viewport breakpoint) because the row is
+   narrower than the screen (page padding + the title sharing the space), so
+   a viewport-based breakpoint was firing far later than the row actually
+   had room, skipping straight to icon-only. Thresholds are a starting
+   point — nudge the two min-width values below if either step still
+   triggers later or earlier than it should on a real device. */
+.rp-header {
+  container-type: inline-size;
+  container-name: rp-header;
+}
+.rp-header .rp-label-short,
+.rp-header .rp-label-full {
+  display: none;
+}
+.rp-header .rp-action-btn {
+  width: 2rem;
+  padding-inline: 0;
+}
+@container rp-header (min-width: 340px) {
+  .rp-header .rp-label-short {
+    display: inline;
+  }
+  .rp-header .rp-action-btn {
+    width: auto;
+    padding-inline: 0.75rem;
+  }
+}
+@container rp-header (min-width: 460px) {
+  .rp-header .rp-label-short {
+    display: none;
+  }
+  .rp-header .rp-label-full {
+    display: inline;
+  }
+}
+
+/* ==== mobile nav slide-over =============================================
+   Plain CSS (no tailwindcss-animate dependency) so the panel slides in from
+   the right instead of just popping in. */
+.mobile-nav-panel {
+  animation: mobile-nav-in 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-panel {
+    animation: none;
+  }
+}
+@keyframes mobile-nav-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }

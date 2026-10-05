@@ -18,6 +18,7 @@ import {
   UserIcon,
 } from '@/components/ui/icons';
 import { getSessionUser } from '@/lib/supabase/server';
+import { cn } from '@/lib/utils';
 
 const features = [
   {
@@ -74,7 +75,7 @@ export default async function HomePage() {
       <main className="flex-1">
         <section className="relative overflow-hidden">
           <div className="bg-dots pointer-events-none absolute inset-0" aria-hidden="true" />
-          <div className="relative mx-auto grid max-w-5xl items-start gap-10 px-5 pb-14 pt-14 sm:pt-20 lg:grid-cols-[1.15fr_minmax(420px,0.85fr)] lg:gap-6">
+          <div className="relative mx-auto grid max-w-3xl items-start gap-10 px-5 pb-14 pt-14 sm:pt-20 lg:max-w-5xl lg:grid-cols-[1.15fr_minmax(420px,0.85fr)] lg:gap-6">
             <div className="text-left">
               <Badge className="rounded-full px-3 py-1">
                 <CheckCircleIcon className="size-3.5" />
@@ -106,31 +107,61 @@ export default async function HomePage() {
         </section>
 
         <section className="mx-auto max-w-3xl px-5 pb-16 pt-16">
-          <h2 className="text-lg font-semibold tracking-tight">What you get</h2>
-          <div className="mt-4 grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2">
-            {features.map(({ icon: Icon, title, body }) => (
-              <div key={title} className="bg-card p-5">
-                <Icon className="size-5 text-muted-foreground" />
-                <h3 className="mt-3 text-sm font-medium">{title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{body}</p>
-              </div>
-            ))}
+          <div className="max-w-md">
+            <h2 className="text-2xl font-semibold tracking-tight">What you get</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Four things that matter once your notes have to become something you actually study from.
+            </p>
+          </div>
+
+          <div className="mt-9 grid gap-x-8 gap-y-9 sm:grid-cols-2">
+            {features.map(({ icon: Icon, title, body }, i) => {
+              // The save/dashboard feature is the one thing worth making the
+              // reader's eye land on first — everything else stays quiet.
+              const emphasize = i === 2;
+              return (
+                <div key={title} className="flex gap-4">
+                  <span
+                    className={cn(
+                      'grid size-10 shrink-0 place-items-center rounded-full',
+                      // text-white, not text-primary-foreground: the brand
+                      // orange is fixed across themes, so its icon needs a
+                      // fixed contrast color too — primary-foreground flips
+                      // to near-black in dark mode and would go muddy here.
+                      emphasize ? 'bg-brand text-white' : 'bg-brand/10 text-brand',
+                    )}
+                  >
+                    <Icon className="size-5" />
+                  </span>
+                  <div className="pt-0.5">
+                    <h3 className="text-[15px] font-semibold leading-tight">{title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{body}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         <section className="mx-auto max-w-3xl px-5 pb-20">
-          <h2 className="text-lg font-semibold tracking-tight">Worth knowing</h2>
-          <div className="mt-4 divide-y overflow-hidden rounded-xl border">
+          <div className="max-w-md">
+            <h2 className="text-2xl font-semibold tracking-tight">Worth knowing</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              The honest answers to what people usually ask before relying on a generated set.
+            </p>
+          </div>
+
+          <div className="mt-7 divide-y border-t">
             {faqs.map(({ icon: Icon, question, answer }) => (
-              <details key={question} className="group p-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
-                  <span className="flex items-center gap-3 text-sm font-medium">
+              <details key={question} className="group py-5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden">
+                  <span className="flex items-center gap-3.5 text-[15px] font-medium">
                     <Icon className="size-4 shrink-0 text-muted-foreground" />
                     {question}
                   </span>
                   <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                 </summary>
-                <p className="mt-3 pl-7 text-sm leading-relaxed text-muted-foreground">{answer}</p>
+                <p className="mt-3 pl-[1.9rem] text-sm leading-relaxed text-muted-foreground">{answer}</p>
               </details>
             ))}
           </div>

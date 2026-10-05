@@ -82,7 +82,17 @@ export default async function PrivacyPage() {
             <p>
               Supabase hosts our database and handles sign-in. Google&apos;s Gemini API processes the notes you
               submit, as described above. Upstash provides the short-lived counters used for rate limiting. Vercel
-              hosts the app itself. We don&apos;t sell your data, and we don&apos;t run ads or third-party trackers.
+              hosts the app and provides anonymous page-view analytics (no cookies, no personal identifiers). We
+              don&apos;t sell your data and we don&apos;t run ads.
+            </p>
+          </Section>
+
+          <Section title="Cookies">
+            <p>
+              Two cookies are used, both set by us directly: one keeps you signed in after you log in (deleted when
+              you sign out or it expires), and one remembers whether you&apos;ve chosen light or dark mode. Neither
+              is used for advertising or cross-site tracking. Page-view analytics (above) doesn&apos;t use cookies
+              at all.
             </p>
           </Section>
 

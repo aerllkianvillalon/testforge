@@ -1,11 +1,18 @@
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
+import { MobileNav } from '@/components/mobile-nav';
 import { SignOutButton } from '@/components/sign-out-button';
 import { SiteNav } from '@/components/site-nav';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { buttonVariants } from '@/components/ui/button';
-import { BookmarkIcon, UserIcon } from '@/components/ui/icons';
+import { UserIcon } from '@/components/ui/icons';
 
+/**
+ * Below `sm`, the bar is just the logo and a single hamburger button — every
+ * other control (nav links, saved sets, sign in/out, profile, theme) moves
+ * into the MobileNav slide-over instead of being squeezed into the row.
+ * `sm` and up keep the original inline layout, unchanged.
+ */
 export function SiteHeader({ email }: { email: string | null }) {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -17,20 +24,14 @@ export function SiteHeader({ email }: { email: string | null }) {
           <SiteNav signedIn={Boolean(email)} />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 sm:flex">
           <ThemeToggle />
           {email ? (
             <>
-              <Link
-                href="/dashboard"
-                className={buttonVariants('ghost', 'sm', 'gap-1.5 px-2 min-[400px]:px-3 sm:hidden')}
-                aria-label="Saved sets"
-                title="Saved sets"
-              >
-                <BookmarkIcon className="min-[400px]:hidden" />
-                <span className="hidden min-[400px]:inline">Saved sets</span>
+              <Link href="/dashboard" className={buttonVariants('ghost', 'sm')}>
+                Saved sets
               </Link>
-              <SignOutButton compact />
+              <SignOutButton />
               <Link
                 href="/profile"
                 className={buttonVariants('ghost', 'icon')}
@@ -51,6 +52,8 @@ export function SiteHeader({ email }: { email: string | null }) {
             </>
           )}
         </div>
+
+        <MobileNav email={email} />
       </div>
     </header>
   );

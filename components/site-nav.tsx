@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const links = [
+export const navLinks = [
   { href: '/#generate', match: '/', label: 'Generate', requiresAuth: false },
   { href: '/dashboard', match: '/dashboard', label: 'Saved sets', requiresAuth: true },
 ] as const;
@@ -14,7 +14,7 @@ export function SiteNav({ signedIn }: { signedIn: boolean }) {
 
   return (
     <nav aria-label="Main" className="hidden items-center gap-1 text-sm sm:flex">
-      {links
+      {navLinks
         .filter((link) => !link.requiresAuth || signedIn)
         .map((link) => (
           <Link
