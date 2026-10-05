@@ -1,0 +1,471 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 72% 29%;
+    --warning: 32 95% 44%;
+    --border: 240 5.9% 78%;
+    --input: 240 5.9% 74%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.625rem;
+    /* Pulled from the logo artwork (app/icon.svg, #ce6d18) — same in both
+       themes since it's brand identity, not a semantic light/dark tone. */
+    --brand: 28 79% 45%;
+    color-scheme: light;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 6% 7.5%;
+    --card-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%; /* was 60% — failed WCAG AA (3.66:1) for white button text; 51% passes at 4.59:1 */
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 60% 50%;
+    --warning: 38 92% 55%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 22%;
+    --ring: 240 4.9% 83.9%;
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply flex min-h-dvh flex-col bg-background text-foreground antialiased;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}
+
+/* ==== flashcard:start ====================================================
+   Plain CSS on purpose (no @apply): the 3D geometry and the keyframes have to
+   behave identically whether or not Tailwind has seen a class name.
+
+   Structure
+     .fc-deck            sized box (5:3), holds the stack
+       .fc-ghost         cards waiting behind the current one
+       .fc-card          the current card: drag, exit and enter animations
+         .fc-tilt        follows the pointer (a few degrees) + .fc-glare highlight
+           .fc-scene     perspective + the "lift" during a flip
+             .fc-flip    rotates 180deg on Y
+               .fc-face  front / back, backface hidden
+   ======================================================================== */
+
+.fc-stage {
+  position: relative;
+  padding-bottom: 1.5rem; /* room for the stack peeking out below the card */
+}
+
+.fc-deck {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 3;
+  min-height: 15rem;
+}
+
+/* Sets containing long answers get a taller card (decided once per set, so the
+   buttons below don't jump from card to card). */
+.fc-deck[data-tall='true'] {
+  aspect-ratio: 4 / 3;
+  min-height: 20rem;
+}
+
+.fc-ghost {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.25rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  transform-origin: 50% 100%;
+  transition:
+    transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 420ms ease;
+}
+.fc-ghost[data-depth='1'] {
+  transform: translateY(0.65rem) scale(0.96);
+}
+.fc-ghost[data-depth='2'] {
+  transform: translateY(1.3rem) scale(0.92);
+  opacity: 0.55;
+}
+
+.fc-card {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  transform-origin: 50% 130%;
+  border-radius: 1.25rem;
+  transition: transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* `backwards`, not `both`: the end state must not stay pinned, or it would
+     override the inline transform used while dragging. */
+  animation: fc-enter 440ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+.fc-card:active {
+  cursor: grabbing;
+}
+.fc-card:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 5px;
+}
+.fc-card[data-dragging='true'] {
+  animation: none;
+  transition: none;
+  cursor: grabbing;
+}
+.fc-card[data-exit] {
+  pointer-events: none;
+}
+.fc-card[data-exit='right'] {
+  animation: fc-exit-right 340ms cubic-bezier(0.55, 0, 0.9, 0.5) forwards;
+}
+.fc-card[data-exit='left'] {
+  animation: fc-exit-left 340ms cubic-bezier(0.55, 0, 0.9, 0.5) forwards;
+}
+
+.fc-tilt {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.25rem;
+  /* No transform at rest, so text stays pixel-sharp until the pointer arrives. */
+  transform: none;
+  transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.fc-tilt[data-active='true'] {
+  transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 70ms linear;
+}
+.fc-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 1.25rem;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), hsl(0 0% 100% / 0.2), transparent 55%);
+  opacity: var(--glare, 0);
+  transition: opacity 250ms ease;
+}
+
+.fc-scene {
+  position: absolute;
+  inset: 0;
+  perspective: 1400px;
+}
+/* Two identical animations, swapped on every flip, restart the lift without
+   remounting the card (a remount would cancel the flip transition). */
+.fc-scene[data-lift='a'] {
+  animation: fc-lift-a 700ms ease-in-out;
+}
+.fc-scene[data-lift='b'] {
+  animation: fc-lift-b 700ms ease-in-out;
+}
+
+.fc-flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 700ms cubic-bezier(0.4, 0.05, 0.2, 1.12);
+}
+.fc-flip[data-flipped='true'] {
+  transform: rotateY(180deg);
+}
+
+.fc-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.1rem 1.5rem 1.25rem;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Front: an index card. */
+.fc-front {
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.5),
+    0 22px 40px -22px hsl(240 10% 4% / 0.35),
+    0 4px 10px -4px hsl(240 10% 4% / 0.12);
+}
+.dark .fc-front {
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.06),
+    0 22px 40px -22px hsl(0 0% 0% / 0.8),
+    0 4px 10px -4px hsl(0 0% 0% / 0.5);
+}
+
+/* Back: the same card, inverted, so a flip is unmistakable. */
+.fc-back {
+  transform: rotateY(180deg);
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: 1px solid hsl(var(--primary));
+  box-shadow:
+    0 22px 40px -22px hsl(240 10% 4% / 0.5),
+    0 4px 10px -4px hsl(240 10% 4% / 0.2);
+}
+
+/* Header row with the red rule that gives an index card away. */
+.fc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 2px solid hsl(var(--destructive) / 0.6);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.fc-head-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+}
+
+.fc-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem 0;
+  /* Soft edges so text that scrolls doesn't look clipped mid-line. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 0.6rem, #000 calc(100% - 1.1rem), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 0.6rem, #000 calc(100% - 1.1rem), transparent 100%);
+  scrollbar-width: thin;
+}
+/* margin:auto centres short text but lets tall text scroll from the top. */
+.fc-text {
+  margin: auto;
+  max-width: 34rem;
+  text-align: center;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.fc-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding-top: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+
+.fc-stamp {
+  position: absolute;
+  top: 1rem;
+  z-index: 3;
+  padding: 0.25rem 0.65rem;
+  border: 2px solid currentColor;
+  border-radius: 0.5rem;
+  background: hsl(var(--background) / 0.9);
+  font-size: 0.85rem;
+  font-weight: 700;
+  pointer-events: none;
+  opacity: 0;
+}
+.fc-stamp-known {
+  left: 1rem;
+  color: hsl(var(--success));
+  transform: rotate(-8deg);
+}
+.fc-stamp-again {
+  right: 1rem;
+  color: hsl(var(--warning));
+  transform: rotate(8deg);
+}
+
+@keyframes fc-enter {
+  from {
+    transform: translateY(0.65rem) scale(0.96);
+    opacity: 0.7;
+  }
+}
+@keyframes fc-exit-right {
+  to {
+    transform: translateX(120%) rotate(14deg);
+    opacity: 0;
+  }
+}
+@keyframes fc-exit-left {
+  to {
+    transform: translateX(-120%) rotate(-14deg);
+    opacity: 0;
+  }
+}
+@keyframes fc-lift-a {
+  40% {
+    transform: translateY(-12px) scale(1.04);
+  }
+}
+@keyframes fc-lift-b {
+  40% {
+    transform: translateY(-12px) scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fc-card,
+  .fc-card[data-exit],
+  .fc-scene,
+  .fc-flip,
+  .fc-ghost {
+    animation: none !important;
+    transition: none !important;
+  }
+  .fc-tilt {
+    transform: none !important;
+    transition: none !important;
+  }
+  .fc-glare {
+    display: none;
+  }
+}
+/* ==== flashcard:end ==================================================== */
+
+/* ==== celebration: confetti ==============================================
+   Pieces get their position, size, drift and timing inline (see
+   components/ui/confetti.tsx); this file only owns the fall. */
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow: hidden;
+  pointer-events: none;
+}
+.confetti > span {
+  position: absolute;
+  top: -14px;
+  border-radius: 2px;
+  animation: confetti-fall 2.4s cubic-bezier(0.25, 0.6, 0.4, 1) forwards;
+}
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift, 0px), 105vh, 0) rotate(var(--spin, 360deg));
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti {
+    display: none;
+  }
+}
+
+/* ==== hero: live demo deck ================================================
+   The hero now renders the real FlashcardReview component (see hero-deck.tsx),
+   which supplies its own stacked-deck effect via .fc-ghost — nothing extra
+   needed here beyond the dotted backdrop. */
+.bg-dots {
+  background-image: radial-gradient(hsl(var(--foreground) / 0.14) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 25%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 25%, transparent 75%);
+}
+/* ==== generator result header: responsive to the row's own width, not the
+   viewport ============================================================
+   Export/Start over start icon-only, pick up a short label once the row
+   itself has room, and the full label once there's more still. Driven by a
+   container query on the row (not a viewport breakpoint) because the row is
+   narrower than the screen (page padding + the title sharing the space), so
+   a viewport-based breakpoint was firing far later than the row actually
+   had room, skipping straight to icon-only. Thresholds are a starting
+   point — nudge the two min-width values below if either step still
+   triggers later or earlier than it should on a real device. */
+.rp-header {
+  container-type: inline-size;
+  container-name: rp-header;
+}
+.rp-header .rp-label-short,
+.rp-header .rp-label-full {
+  display: none;
+}
+.rp-header .rp-action-btn {
+  width: 2rem;
+  padding-inline: 0;
+}
+@container rp-header (min-width: 340px) {
+  .rp-header .rp-label-short {
+    display: inline;
+  }
+  .rp-header .rp-action-btn {
+    width: auto;
+    padding-inline: 0.75rem;
+  }
+}
+@container rp-header (min-width: 460px) {
+  .rp-header .rp-label-short {
+    display: none;
+  }
+  .rp-header .rp-label-full {
+    display: inline;
+  }
+}
+
+/* ==== mobile nav slide-over =============================================
+   Plain CSS (no tailwindcss-animate dependency) so the panel slides in from
+   the right instead of just popping in. */
+.mobile-nav-panel {
+  animation: mobile-nav-in 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-panel {
+    animation: none;
+  }
+}
+@keyframes mobile-nav-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
